@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .check-result {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>회원가입</h1>
+        <form id="register-form">
+            <label for="username">아이디</label>
+            <input type="text" id="username" name="username" required>
+            <button type="button" onclick="checkUsername()">중복 체크</button>
+            <span id="username-result" class="check-result"></span>
+
+            <label for="name">이름</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="password">비밀번호</label>
+            <input type="password" id="password" name="password" required>
+
+            <label for="phone">전화번호</label>
+            <input type="tel" id="phone" name="phone" required placeholder="010-1234-5678" pattern="\d{3}-\d{4}-\d{4}">
+
+            <label for="address">주소</label>
+            <button type="button" onclick="searchAddress()">주소 검색</button>
+            <input type="text" id="address" name="address" readonly placeholder="주소를 검색해주세요" autocomplete="off">
+
+            <label for="detail-address">상세주소</label>
+            <input type="text" id="detail-address" name="detail-address" placeholder="상세주소를 입력하세요" required>
+
+            <button type="submit">회원가입</button>
+        </form>
+    </div>
+
+    <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+    <script>
+        function searchAddress() {
+            new daum.Postcode({
+                oncomplete: function(data) {
+                    document.getElementById('address').value = data.address;
+                }
+            }).open();
+        }
+
+        function checkUsername() {
+            var username = document.getElementById('username').value;
+            var resultSpan = document.getElementById('username-result');
+            var loadingIndicator = document.createElement('span');
+            loadingIndicator.textContent = ' 확인 중...';
+            resultSpan.textContent = '';
+            resultSpan.appendChild(loadingIndicator);
+
+            if (username) {
+                fetch('check_username.php?username=' + encodeURIComponent(username))
+                    .then(response => response.json())
+                    .then(data => {
+                        resultSpan.removeChild(loadingIndicator); // 로딩 인디케이터 제거
+                        if (data.available) {
+                            resultSpan.textContent = '사용 가능한 아이디입니다.';
+                            resultSpan.style.color = 'green';
+                        } else {
+                            resultSpan.textContent = '이미 사용 중인 아이디입니다.';
+                            resultSpan.style.color = 'red';
+                        }
+                    })
+                    .catch(error => {
+                        resultSpan.removeChild(loadingIndicator); // 로딩 인디케이터 제거
+                        resultSpan.textContent = '오류 발생. 나중에 다시 시도하세요.';
+                        resultSpan.style.color = 'red';
+                    });
+            } else {
+                resultSpan.textContent = '아이디를 입력해주세요.';
+                resultSpan.style.color = 'orange';
+            }
+        }
+
+        // 회원가입 폼 제출 처리
+        document.getElementById('register-form').onsubmit = function(event) {
+            event.preventDefault(); // 기본 제출 이벤트 방지
+
+            var formData = new FormData(this);
+            
+            fetch('http://localhost/my_project/register.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    document.getElementById('register-form').reset(); // 폼 초기화
+                } else {
+                    alert(data.message); // 오류 메시지 표시
+                }
+            })
+            .catch(error => {
+                alert('오류 발생. 나중에 다시 시도하세요.');
+            });
+        };
+    </script>
+</body>
+</html>

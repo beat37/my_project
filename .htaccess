@@ -1,0 +1,3 @@
+RewriteEngine On
+RewriteCond %{HTTP_HOST} ^www\.localhost$ [NC]
+RewriteRule ^(.*)$ http://localhost/$1 [L,R=301]

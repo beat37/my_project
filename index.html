@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>메인 페이지</title>
+    <link rel="stylesheet" href="styles.css"> <!-- CSS 파일 링크 -->
+</head>
+<body>
+
+    <div class="menu-container">
+        <div class="menu-box">
+            <nav class="menu">
+                <span><a href="home.html">홈</a></span>
+                <span class="divider">|</span>
+                <span id="login-menu"><a href="login.html">로그인</a></span>
+                <span class="divider">|</span>
+                <span id="logout-button" style="display:none; cursor:pointer;">로그아웃</span>
+                <span><a href="register.html">회원가입</a></span> <!-- 회원가입 링크 추가 -->
+            </nav>
+        </div>
+    </div>
+
+    <div class="divider-line"></div> <!-- 구분선 추가 -->
+
+    <div class="header">
+        <div class="logo-search-container">
+            <div class="logo">
+                <img src="images/logo.png" alt="로고">
+            </div>
+            <div class="search-container">
+                <input type="text" class="search-box" placeholder="검색..." id="searchInput">
+                <span class="clear-btn" onclick="clearSearch()">
+                    <img src="images/x.png" alt="X 아이콘" class="clear-icon"> <!-- X 아이콘 이미지 추가 -->
+                </span>
+                <img src="images/search.png" alt="검색 아이콘" class="search-icon"> <!-- 검색 아이콘 추가 -->
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="horizontal-menu">
+            <span>NEW</span>
+            <span class="dropdown">급수기
+                <div class="dropdown-content">
+                    <span>니플</span>
+                    <span>레귤레이터</span>
+                    <span>엔드키트</span>
+                </div>
+            </span>
+            <span class="dropdown">급이기
+                <div class="dropdown-content">
+                    <span>구동부</span>
+                    <span>코너</span>
+                </div>
+            </span>
+            <span>환풍기</span>
+            <span>컨트롤</span>
+        </div>
+    </div>
+
+    <script>
+        function clearSearch() {
+            document.getElementById('searchInput').value = ''; // 검색창 내용 삭제
+        }
+
+        function updateLoginState(isLoggedIn) {
+            const loginMenu = document.getElementById('login-menu');
+            const logoutButton = document.getElementById('logout-button');
+
+            if (isLoggedIn) {
+                loginMenu.style.display = 'none'; // 로그인 메뉴 숨김
+                logoutButton.style.display = 'block'; // 로그아웃 버튼 보임
+            } else {
+                loginMenu.style.display = 'block'; // 로그인 메뉴 보임
+                logoutButton.style.display = 'none'; // 로그아웃 버튼 숨김
+            }
+        }
+
+        // 로그인 상태 확인
+        const isLoggedIn = !!localStorage.getItem('loggedIn'); // 로그인 상태 확인
+        updateLoginState(isLoggedIn); // 로그인 상태 업데이트
+
+        document.getElementById('logout-button').onclick = function() {
+            // 로그아웃 처리
+            localStorage.removeItem('loggedIn'); // 로그인 상태 제거
+            updateLoginState(false); // 메뉴 업데이트
+            alert("로그아웃되었습니다.");
+        };
+    </script>
+    
+</body>
+</html>

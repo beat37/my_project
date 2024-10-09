@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 페이지</title>
+    <link rel="stylesheet" href="styles.css"> <!-- CSS 파일 링크 -->
+    <script src="https://developers.kakao.com/sdk/js/kakao.min.js"></script> <!-- 카카오 SDK -->
+    <script src="https://static.nid.naver.com/js/naveridlogin_js_sdk_2.0.1.js"></script> <!-- 네이버 SDK -->
+    <script>
+        // 카카오톡 초기화
+        Kakao.init('4ef9459f46e1f11ad514a54b7d89ed6f'); // 카카오 앱 키
+
+        // 현재 시간을 한국 표준시로 변환하는 함수
+        function getKoreanTime() {
+            const now = new Date();
+            const koreanTime = new Date(now.getTime() + (9 * 60 * 60 * 1000)); // UTC+9
+            return koreanTime.toISOString().replace('Z', '+09:00'); // 'Z'를 '+09:00'으로 대체
+        }
+
+        // 카카오톡 로그인 함수
+        function loginWithKakao() {
+            Kakao.Auth.logout(); // 이전 세션 종료
+            Kakao.Auth.login({
+                success: function(authObj) {
+                    console.log('로그인 성공:', JSON.stringify(authObj)); // authObj 출력
+
+                    // 사용자 정보 요청
+                    Kakao.API.request({
+                        url: '/v2/user/me',
+                        success: function(response) {
+                            const kakaoId = response.id; // 사용자 ID
+                            const username = response.properties.nickname; // 사용자 닉네임
+                            const email = response.kakao_account.email; // 사용자 이메일
+                            const loginTime = getKoreanTime(); // 현재 시간 (KST)
+
+                            // 서버에 사용자 정보 전송
+                            fetch('http://localhost:3000/save-login', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    kakaoId: kakaoId,
+                                    username: username,
+                                    email: email, // 이메일 추가
+                                    method: '카카오톡',
+                                    loginTime: loginTime
+                                })
+                            })
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error('네트워크 응답이 좋지 않습니다.');
+                                }
+                                return response.text();
+                            })
+                            .then(data => {
+                                console.log(data);
+                                localStorage.setItem('loggedIn', true);
+                                window.location.href = "home.html"; // home.html로 리다이렉트
+                            })
+                            .catch(error => {
+                                console.error('로그인 요청 오류:', error);
+                                alert("로그인 요청 중 오류가 발생했습니다.");
+                            });
+                        },
+                        fail: function(error) {
+                            console.error('사용자 정보 요청 실패:', error);
+                            alert("사용자 정보를 가져오는 데 실패했습니다.");
+                        }
+                    });
+                },
+                fail: function(err) {
+                    console.error(err); // 오류 출력
+                    alert("로그인에 실패했습니다.");
+                }
+            });
+        }
+
+        // 네이버 로그인 초기화
+        var naverLogin = new naver_id_login("zEjpbpXmtJxL2x4q5jkm", "etKkCeN6RX");
+
+        // 네이버 로그인 함수
+        function loginWithNaver() {
+            naverLogin.getLoginStatus(function(status) {
+                if (status) {
+                    var id_token = naverLogin.getAccessToken();
+                    fetch('http://localhost:3000/save-login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            token: id_token,
+                            method: '네이버'
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('네트워크 응답이 좋지 않습니다.');
+                        }
+                        return response.text();
+                    })
+                    .then(data => {
+                        console.log(data);
+                        localStorage.setItem('loggedIn', true);
+                        window.location.href = "home.html"; // home.html로 리다이렉트
+                    })
+                    .catch(error => {
+                        console.error('로그인 요청 오류:', error);
+                        alert("로그인 요청 중 오류가 발생했습니다.");
+                    });
+                } else {
+                    naverLogin.login(); // 로그인 페이지로 리디렉션
+                }
+            });
+        }
+
+        function login() {
+            const username = document.getElementById('username').value;
+
+            fetch('http://localhost:3000/save-login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username: username, method: '일반 로그인' })
+            })
+            .then(response => response.text())
+            .then(data => {
+                window.location.href = "home.html"; // home.html로 리다이렉트
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function logout() {
+            // 로그아웃 처리
+            localStorage.removeItem('loggedIn');
+            alert("로그아웃되었습니다.");
+        }
+    </script>
+</head>
+<body>
+
+    <div class="login-page">
+        <div class="login-container">
+            <h2>로그인</h2>
+            <div class="form-group">
+                <label for="username">아이디</label>
+                <input type="text" id="username" placeholder="아이디를 입력하세요">
+            </div>
+            <div class="form-group">
+                <label for="password">패스워드</label>
+                <input type="password" id="password" placeholder="패스워드를 입력하세요">
+            </div>
+            <button id="loginButton" onclick="login()">로그인</button>
+            <div class="register-link">
+                <a href="#">회원가입</a>
+            </div>
+        </div>
+
+        <div class="sns-login">
+            <h2>SNS 로그인</h2>
+
+            <button class="sns-button naver-button" onclick="loginWithNaver()">
+                <img src="images/naver.png" alt="naver 아이콘" class="sns-icon"> 
+                네이버 아이디로 로그인
+            </button>
+
+            <button class="sns-button kakao-button" onclick="loginWithKakao()">
+                <img src="images/kakao.png" alt="KakaoTalk 아이콘" class="sns-icon"> 
+                카카오톡으로 로그인
+            </button>
+        </div>
+    </div>
+
+</body>
+</html>
